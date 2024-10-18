@@ -5,5 +5,5 @@
 
 - Jisel Rivera
 - Sergio Aguilar 
-- Student 3
+- Dumebi Ijomah
 - Student 4
