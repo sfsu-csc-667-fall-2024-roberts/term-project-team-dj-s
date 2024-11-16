@@ -7,6 +7,7 @@
  * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
  */
 /******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "./src/client/main.ts":
@@ -15,7 +16,7 @@
   \****************************/
 /***/ (() => {
 
-eval("throw new Error(\"Module parse failed: Unterminated string constant (2:12)\\nFile was processed with these loaders:\\n * ./node_modules/ts-loader/index.js\\nYou may need an additional loader to handle the result of these loaders.\\n| \\\"use strict\\\";\\n> console.log(\\\"Hello from a bundled asset.”););\\n| \");\n\n//# sourceURL=webpack://team-alpha-uno/./src/client/main.ts?");
+eval("\nconsole.log(\"Hello from a bundled asset.\");\n\n\n//# sourceURL=webpack://team-alpha-uno/./src/client/main.ts?");
 
 /***/ })
 
@@ -24,7 +25,7 @@ eval("throw new Error(\"Module parse failed: Unterminated string constant (2:12)
 /******/ 	
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	// This entry module doesn't tell about it's top-level declarations so it can't be inlined
+/******/ 	// This entry module can't be inlined because the eval devtool is used.
 /******/ 	var __webpack_exports__ = {};
 /******/ 	__webpack_modules__["./src/client/main.ts"]();
 /******/ 	
