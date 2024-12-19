@@ -1,0 +1,1 @@
+{"version":3,"file":"main.js","mappings":";;;;;AAAa;AACb","sources":["webpack://team-alpha-uno/./src/client/main.ts"],"sourcesContent":["\"use strict\";\nconsole.log(\"Hello from a bundled asset.\");\n"],"names":[],"sourceRoot":""}

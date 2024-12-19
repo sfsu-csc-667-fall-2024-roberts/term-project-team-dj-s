@@ -1,8 +1,10 @@
 # CSC 667/867 Fall 2024 Term Project
-
 ## Team Members
+- Jisel Rivera
+- Sergio Aguilar
+- Dumebi Ijomah
+- Fasika Abera
 
-- Student 1
-- Student 2
-- Student 3
-- Student 4
+To Run the application once you import run below command 
+1. npm install
+2. npm run start:dev

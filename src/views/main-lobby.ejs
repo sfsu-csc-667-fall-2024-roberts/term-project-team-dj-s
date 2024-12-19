@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO Game Lobby</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      text-align: center;
+      padding: 0;
+      margin: 0;
+    }
+    header {
+      background-color: #6200ea;
+      color: #fff;
+      padding: 1em 0;
+    }
+    nav ul {
+      list-style: none;
+      padding: 0;
+    }
+    nav ul li {
+      display: inline;
+      margin: 0 15px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+    }
+    main {
+      padding: 2em;
+    }
+    .player-zone {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .player {
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #6200ea;
+      border-radius: 5px;
+      background-color: #fff;
+      width: 150px;
+      text-align: center;
+    }
+    .uno-card {
+      width: 50px;
+      height: 70px;
+      display: inline-block;
+      border-radius: 5px;
+      margin: 5px;
+      color: #fff;
+      font-weight: bold;
+      line-height: 70px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .red { background-color: #e63946; }
+    .green { background-color: #2a9d8f; }
+    .blue { background-color: #264653; }
+    .yellow { background-color: #e9c46a; }
+    .logout-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6200ea;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    #turn-indicator {
+      font-size: 1.2em;
+      margin-top: 20px;
+      color: #6200ea;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/game-page">Start Game</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Game Lobby</h1>
+    <p>Waiting for players to join the game...</p>
+
+    <div id="game-board">
+      <h2>Game Board</h2>
+      <div id="turn-indicator">Waiting to start...</div>
+      <div class="player-zone" id="players"></div>
+      <button id="start-game">Start Game</button>
+    </div>
+
+    <a href="/auth/logout" class="logout-link">Logout</a>
+  </main>
+
+  <footer>
+    <p>© 2024 Your Company</p>
+  </footer>
+
+  <script>
+    const colors = ['red', 'green', 'blue', 'yellow'];
+    const values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw 2'];
+    let deck = [];
+    let currentPlayerIndex = 0;
+
+    function createDeck() {
+      deck = [];
+      colors.forEach(color => {
+        values.forEach(value => {
+          deck.push({ color, value });
+        });
+      });
+      deck = shuffle(deck);
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function dealCards(players, cardsPerPlayer) {
+      players.forEach(player => {
+        player.hand = deck.splice(0, cardsPerPlayer);
+      });
+    }
+
+    function renderPlayers(players) {
+      const playerZone = document.getElementById('players');
+      playerZone.innerHTML = '';
+      players.forEach((player, index) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.classList.add('player');
+        playerDiv.innerHTML = `<h3>${player.name}</h3><p>Score: ${player.score}</p>`;
+        player.hand.forEach(card => {
+          const cardDiv = document.createElement('div');
+          cardDiv.classList.add('uno-card', card.color);
+          cardDiv.textContent = card.value;
+          cardDiv.addEventListener('click', () => playCard(index, card));
+          playerDiv.appendChild(cardDiv);
+        });
+        playerZone.appendChild(playerDiv);
+      });
+    }
+
+    function calculateCardScore(card) {
+      if (!isNaN(card.value)) return parseInt(card.value);
+      return 20;
+    }
+
+    function playCard(playerIndex, card) {
+      if (playerIndex !== currentPlayerIndex) {
+        alert("It's not your turn!");
+        return;
+      }
+      players[playerIndex].hand = players[playerIndex].hand.filter(c => c !== card);
+      players[playerIndex].score += calculateCardScore(card);
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      updateTurnIndicator();
+      renderPlayers(players);
+    }
+
+    function updateTurnIndicator() {
+      document.getElementById('turn-indicator').textContent = `It's ${players[currentPlayerIndex].name}'s turn.`;
+    }
+
+    const players = [
+      { name: 'Player 1', hand: [], score: 0 },
+      { name: 'Player 2', hand: [], score: 0 },
+      { name: 'Player 3', hand: [], score: 0 }
+    ];
+
+    document.getElementById('start-game').addEventListener('click', () => {
+      createDeck();
+      dealCards(players, 7);
+      renderPlayers(players);
+      updateTurnIndicator();
+    });
+  </script>
+</body>
+</html>
