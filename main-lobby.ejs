@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNO Game Lobby</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      text-align: center;
+      padding: 0;
+      margin: 0;
+    }
+    header {
+      background-color: #6200ea;
+      color: #fff;
+      padding: 1em 0;
+    }
+    nav ul {
+      list-style: none;
+      padding: 0;
+    }
+    nav ul li {
+      display: inline;
+      margin: 0 15px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+    }
+    main {
+      padding: 2em;
+    }
+    .player-zone {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .player {
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #6200ea;
+      border-radius: 5px;
+      background-color: #fff;
+      width: 150px;
+      text-align: center;
+    }
+    .uno-card {
+      width: 50px;
+      height: 70px;
+      display: inline-block;
+      border-radius: 5px;
+      margin: 5px;
+      color: #fff;
+      font-weight: bold;
+      line-height: 70px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .red { background-color: #e63946; }
+    .green { background-color: #2a9d8f; }
+    .blue { background-color: #264653; }
+    .yellow { background-color: #e9c46a; color: #000; }
+    .black { background-color: #333333; }
+
+    .logout-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6200ea;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    #turn-indicator {
+      font-size: 1.2em;
+      margin-top: 20px;
+      color: #6200ea;
+    }
+    #discard-pile {
+      margin-top: 20px;
+    }
+    #discard-pile #top-card {
+      display: inline-block;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/game-page">Start Game</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <h1>Game Lobby</h1>
+    <p>Waiting for players to join the game...</p>
+    <div id="game-board">
+      <h2>Game Board</h2>
+      <div id="turn-indicator">Waiting to start...</div>
+      <div id="discard-pile">
+        <h3>Discard Pile</h3>
+        <div id="top-card"></div>
+      </div>
+      <div class="player-zone" id="players"></div>
+      <button id="start-game">Start Game</button>
+    </div>
+    <a href="/auth/logout" class="logout-link">Logout</a>
+  </main>
+  <footer>
+    <p>© 2024 team-dj</p>
+  </footer>
+  <script>
+    const colors = ['red', 'green', 'blue', 'yellow'];
+    const values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw 2'];
+    const wildValues = ['Wild', 'Wild Draw 4'];
+    let deck = [];
+    let discardPile = [];
+    let currentPlayerIndex = 0;
+    let direction = 1; // 1 = clockwise, -1 = counterclockwise
+
+    const players = [
+      { name: 'Player 1', hand: [], score: 0 },
+      { name: 'Player 2', hand: [], score: 0 },
+      { name: 'Player 3', hand: [], score: 0 }
+    ];
+
+    function createDeck() {
+      deck = [];
+      // For each color, add standard cards
+      colors.forEach(color => {
+        values.forEach(value => {
+          // One set of each value per color
+          deck.push({ color, value });
+          // For UNO standard, 0 is once per color, others twice, but for simplicity:
+          if (value !== '0') {
+            deck.push({ color, value });
+          }
+        });
+      });
+      // Add Wild and Wild Draw 4 cards
+      for (let i = 0; i < 4; i++) {
+        deck.push({ color: 'black', value: 'Wild' });
+        deck.push({ color: 'black', value: 'Wild Draw 4' });
+      }
+
+      deck = shuffle(deck);
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function dealCards(players, cardsPerPlayer) {
+      players.forEach(player => {
+        player.hand = deck.splice(0, cardsPerPlayer);
+      });
+    }
+
+    function startGame() {
+      createDeck();
+      dealCards(players, 7);
+      // Flip one card to discard pile as starting card (ensure it's not a Wild Draw 4 initially)
+      let firstCard = deck.pop();
+      // If first card is a wild draw 4, pick another card until valid or handle logic
+      while (firstCard.value === 'Wild Draw 4') {
+        deck.unshift(firstCard); // put it back at the start
+        firstCard = deck.pop();
+      }
+      discardPile = [firstCard];
+      renderPlayers(players);
+      renderDiscardPile();
+      updateTurnIndicator();
+    }
+
+    function renderPlayers(players) {
+      const playerZone = document.getElementById('players');
+      playerZone.innerHTML = '';
+      players.forEach((player, index) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.classList.add('player');
+        playerDiv.innerHTML = `<h3>${player.name}</h3><p>Score: ${player.score}</p>`;
+
+        player.hand.forEach(card => {
+          const cardDiv = document.createElement('div');
+          cardDiv.classList.add('uno-card', card.color);
+          cardDiv.textContent = card.value;
+          cardDiv.addEventListener('click', () => playCard(index, card));
+          playerDiv.appendChild(cardDiv);
+        });
+
+        // If it's this player's turn and they have no playable card, show draw button
+        if (index === currentPlayerIndex && !hasPlayableCard(players[index].hand, discardPile[discardPile.length - 1])) {
+          const drawButton = document.createElement('button');
+          drawButton.textContent = "Draw Card";
+          drawButton.addEventListener('click', () => {
+            drawCardsForPlayer(index, 1);
+            // After drawing, if still no playable card, turn moves on
+            if (!hasPlayableCard(players[index].hand, discardPile[discardPile.length - 1])) {
+              currentPlayerIndex = getNextPlayerIndex();
+            }
+            updateTurnIndicator();
+            renderPlayers(players);
+          });
+          playerDiv.appendChild(drawButton);
+        }
+
+        playerZone.appendChild(playerDiv);
+      });
+    }
+
+    function hasPlayableCard(hand, topCard) {
+      return hand.some(card => canPlayCard(card, topCard));
+    }
+
+    function canPlayCard(card, topCard) {
+      // Wild cards can always be played
+      if (card.value === 'Wild' || card.value === 'Wild Draw 4') return true;
+      // Match color or value
+      if (card.color === topCard.color || card.value === topCard.value) return true;
+      return false;
+    }
+
+    function playCard(playerIndex, card) {
+      if (playerIndex !== currentPlayerIndex) {
+        alert("It's not your turn!");
+        return;
+      }
+
+      const topCard = discardPile[discardPile.length - 1];
+      if (!canPlayCard(card, topCard)) {
+        alert("You cannot play this card.");
+        return;
+      }
+
+      // Remove the card from player's hand
+      players[playerIndex].hand = players[playerIndex].hand.filter(c => c !== card);
+      discardPile.push(card);
+
+      applyCardEffects(card);
+
+      // Check if player has only one card (UNO)
+      if (players[playerIndex].hand.length === 1) {
+        console.log(players[playerIndex].name + " says UNO!");
+      }
+
+      // Check if player won
+      if (players[playerIndex].hand.length === 0) {
+        alert(players[playerIndex].name + " wins!");
+        return;
+      }
+
+      currentPlayerIndex = getNextPlayerIndex();
+      updateTurnIndicator();
+      renderPlayers(players);
+      renderDiscardPile();
+    }
+
+    function applyCardEffects(card) {
+      let nextPlayer = getNextPlayerIndex();
+
+      if (card.value === 'Reverse') {
+        direction *= -1;
+      } else if (card.value === 'Skip') {
+        currentPlayerIndex = getNextPlayerIndex(); // skip next player
+      } else if (card.value === 'Draw 2') {
+        drawCardsForPlayer(nextPlayer, 2);
+      } else if (card.value === 'Wild') {
+        card.color = chooseRandomColor();
+      } else if (card.value === 'Wild Draw 4') {
+        card.color = chooseRandomColor();
+        drawCardsForPlayer(nextPlayer, 4);
+      }
+    }
+
+    function chooseRandomColor() {
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function getNextPlayerIndex() {
+      return (currentPlayerIndex + direction + players.length) % players.length;
+    }
+
+    function drawCardsForPlayer(playerIndex, count = 1) {
+      for (let i = 0; i < count; i++) {
+        if (deck.length === 0) {
+          reshuffleDeck();
+        }
+        players[playerIndex].hand.push(deck.pop());
+      }
+    }
+
+    function reshuffleDeck() {
+      const topCard = discardPile.pop();
+      deck = shuffle(discardPile);
+      discardPile = [topCard];
+    }
+
+    function renderDiscardPile() {
+      const topCardDiv = document.getElementById('top-card');
+      topCardDiv.innerHTML = '';
+      if (discardPile.length > 0) {
+        const topCard = discardPile[discardPile.length - 1];
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('uno-card', topCard.color);
+        cardDiv.textContent = topCard.value;
+        topCardDiv.appendChild(cardDiv);
+      }
+    }
+
+    function updateTurnIndicator() {
+      document.getElementById('turn-indicator').textContent = `It's ${players[currentPlayerIndex].name}'s turn.`;
+    }
+
+    document.getElementById('start-game').addEventListener('click', startGame);
+  </script>
+</body>
+</html>
